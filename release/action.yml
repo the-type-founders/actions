@@ -1,0 +1,89 @@
+name: Release
+
+inputs:
+  github-token:
+    required: true
+  repository:
+    required: true
+  commit:
+    required: true
+  version:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: context
+      run: |
+        organization_repository=${{ inputs.repository }}
+        organization=${organization_repository%/*}
+        repository=${organization_repository#*/}
+        patch_version=${{ inputs.version }}
+        minor_version=${patch_version%.*}
+        major_version=${minor_version%.*}
+        echo organization=${organization} >> $GITHUB_OUTPUT
+        echo repository=${repository} >> $GITHUB_OUTPUT
+        echo major-version=${major_version} >> $GITHUB_OUTPUT
+        echo minor-version=${minor_version} >> $GITHUB_OUTPUT
+        echo patch-version=${patch_version} >> $GITHUB_OUTPUT
+      shell: bash
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          try {
+            await github.rest.git.createRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'refs/tags/v${{ steps.context.outputs.major-version }}',
+              sha: '${{ inputs.commit }}',
+            });
+          } catch {
+            await github.rest.git.updateRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'tags/v${{ steps.context.outputs.major-version }}',
+              sha: '${{ inputs.commit }}',
+              force: true,
+            });
+          }
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          try {
+            await github.rest.git.createRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'refs/tags/v${{ steps.context.outputs.minor-version }}',
+              sha: '${{ inputs.commit }}',
+            });
+          } catch {
+            await github.rest.git.updateRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'tags/v${{ steps.context.outputs.minor-version }}',
+              sha: '${{ inputs.commit }}',
+              force: true,
+            });
+          }
+    - uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          try {
+            await github.rest.git.createRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'refs/tags/v${{ steps.context.outputs.patch-version }}',
+              sha: '${{ inputs.commit }}',
+            });
+          } catch {
+            await github.rest.git.updateRef({
+              owner: '${{ steps.context.outputs.organization }}',
+              repo: '${{ steps.context.outputs.repository }}',
+              ref: 'tags/v${{ steps.context.outputs.patch-version }}',
+              sha: '${{ inputs.commit }}',
+              force: true,
+            });
+          }
