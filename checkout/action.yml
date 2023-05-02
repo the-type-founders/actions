@@ -1,39 +1,49 @@
 name: Checkout
 
 inputs:
+  repository:
+    default: ${{ github.repository }}
+  ref:
+    default: ${{ github.sha }}
+    required: false
+  token:
+    default: ${{ github.token }}
+  path:
+    default: "."
+    required: false
   clean:
     default: true
-    required: false
   fetch-depth:
     default: 1
-    required: false
-  ref:
-    default: ""
-    required: false
 
 runs:
   using: composite
   steps:
     - uses: actions/checkout@v3
       with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.ref }}
+        token: ${{ inputs.token }}
+        path: ${{ inputs.path }}
         clean: ${{ inputs.clean }}
         fetch-depth: ${{ inputs.fetch-depth }}
-        ref: ${{ inputs.ref }}
     - id: key
       run: |
         git lfs ls-files --long | sort > .key
-        hash=$(cat .key | sha256sum | cut -d " " -f1)
+        hash=$(cat .key | sha256sum | cut -d " " -f 1)
         echo ${hash} based on $(cat .key | wc -l) files
         echo hash=${hash} >> $GITHUB_OUTPUT
       shell: bash
+      working-directory: ${{ inputs.path }}
     - uses: actions/cache/restore@v3
       with:
-        path: .git/lfs
+        path: ${{ inputs.path || github.workspace }}/.git/lfs
         key: v1-${{ steps.key.outputs.hash }}
         restore-keys: v1-
     - run: git lfs pull
       shell: bash
+      working-directory: ${{ inputs.path }}
     - uses: actions/cache/save@v3
       with:
-        path: .git/lfs
+        path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.key.outputs.hash }}
