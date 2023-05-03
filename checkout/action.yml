@@ -3,14 +3,12 @@ name: Checkout
 inputs:
   repository:
     default: ${{ github.repository }}
-  ref:
+  reference:
     default: ${{ github.sha }}
-    required: false
   token:
     default: ${{ github.token }}
   path:
     default: "."
-    required: false
   clean:
     default: true
   fetch-depth:
@@ -22,7 +20,7 @@ runs:
     - uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.ref }}
+        ref: ${{ inputs.reference }}
         token: ${{ inputs.token }}
         path: ${{ inputs.path }}
         clean: ${{ inputs.clean }}
