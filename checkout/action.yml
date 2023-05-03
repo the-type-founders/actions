@@ -13,6 +13,10 @@ inputs:
     default: true
   fetch-depth:
     default: 1
+  exclude:
+    default: ""
+  include:
+    default: "*"
 
 runs:
   using: composite
@@ -25,18 +29,23 @@ runs:
         path: ${{ inputs.path }}
         clean: ${{ inputs.clean }}
         fetch-depth: ${{ inputs.fetch-depth }}
-    - id: key
+    - id: context
       run: |
-        git lfs ls-files --long | sort > .key
-        hash=$(cat .key | sha256sum | cut -d " " -f 1)
-        echo ${hash} based on $(cat .key | wc -l) files
-        echo hash=${hash} >> $GITHUB_OUTPUT
+        git lfs ls-files \
+          --exclude "${{ inputs.exclude }}" \
+          --include "${{ inputs.include }}" \
+          --long | sort > .key
+        key=$(cat .key | sha256sum | cut -d " " -f 1)
+        echo "The key is ${key} based on $(cat .key | wc -l | xargs) files:"
+        head .key
+        echo ...
+        echo "key=${key}" >> "${GITHUB_OUTPUT}"
       shell: bash
       working-directory: ${{ inputs.path }}
     - uses: actions/cache/restore@v3
       with:
-        path: ${{ inputs.path || github.workspace }}/.git/lfs
-        key: v1-${{ steps.key.outputs.hash }}
+        path: ${{ inputs.path }}/.git/lfs
+        key: v1-${{ steps.context.outputs.key }}
         restore-keys: v1-
     - run: git lfs pull
       shell: bash
@@ -44,4 +53,4 @@ runs:
     - uses: actions/cache/save@v3
       with:
         path: ${{ inputs.path }}/.git/lfs
-        key: v1-${{ steps.key.outputs.hash }}
+        key: v1-${{ steps.context.outputs.key }}
