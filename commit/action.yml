@@ -1,0 +1,58 @@
+name: Commit
+
+inputs:
+  base:
+    default: main
+  head:
+    required: true
+  token:
+    default: ${{ github.token }}
+  gpg_private_key:
+    default: ""
+  gpg_passphrase:
+    default: ""
+  message:
+    required: true
+  reviewer:
+    default: ""
+  path:
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - if: inputs.gpg_private_key != '' && inputs.gpg_passphrase != ''
+      uses: crazy-max/ghaction-import-gpg@v5
+      with:
+        gpg_private_key: ${{ inputs.gpg_private_key }}
+        passphrase: ${{ inputs.gpg_passphrase }}
+        git_user_signingkey: true
+        git_commit_gpgsign: true
+        workdir: ${{ inputs.path }}
+    - run: |
+        if ! git diff --cached --exit-code > /dev/null; then
+          git config user.name "The Type Founders"
+          git config user.email admin@thetypefounders.com
+          git checkout -b "${{ inputs.head }}"
+          git commit -m "${{ inputs.message }}"
+          git push --force --set-upstream origin "${{ inputs.head }}"
+          if ! gh pr list \
+            --base "${{ inputs.base }}" \
+            --head "${{ inputs.head }}" | \
+            grep "${{ inputs.head }}"; then
+            arguments=(
+              --base "${{ inputs.base }}"
+              --head "${{ inputs.head }}"
+              --title "${{ inputs.message }}"
+              --body "This pull request has been created automatically."
+            )
+            if [[ -n "${{ inputs.reviewer }}" ]]; then
+              arguments+=(--reviewer "${{ inputs.reviewer }}")
+            fi
+            gh pr create "${arguments[@]}"
+          fi
+        fi
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
