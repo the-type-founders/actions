@@ -3,6 +3,8 @@ name: Merge
 inputs:
   token:
     default: ${{ github.token }}
+  path:
+    default: "."
 
 runs:
   using: composite
@@ -11,7 +13,10 @@ runs:
       with:
         ref: ${{ github.event.pull_request.base.ref }}
         token: ${{ inputs.token }}
+        path: ${{ inputs.path }}
         fetch-depth: 0
     - run: |
         git merge --ff-only "origin/${{ github.event.pull_request.head.ref }}"
         git push
+      shell: bash
+      working-directory: ${{ inputs.path }}
