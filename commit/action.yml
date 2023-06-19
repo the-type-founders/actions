@@ -4,7 +4,7 @@ inputs:
   base:
     default: main
   head:
-    required: true
+    default: ""
   token:
     default: ${{ github.token }}
   gpg_private_key:
@@ -31,18 +31,19 @@ runs:
         workdir: ${{ inputs.path }}
     - run: |
         if ! git diff --cached --exit-code > /dev/null; then
+          head="${{ inputs.head }}"
+          if [[ -z "${head}" ]]; then
+            head=ttf-$(echo "${{ inputs.message }}" | tr "[:upper:]" "[:lower:]" | tr " " -)
+          fi
           git config user.name "The Type Founders"
           git config user.email admin@thetypefounders.com
-          git checkout -b "${{ inputs.head }}"
+          git checkout -b "${head}"
           git commit -m "${{ inputs.message }}"
-          git push --force --set-upstream origin "${{ inputs.head }}"
-          if ! gh pr list \
-            --base "${{ inputs.base }}" \
-            --head "${{ inputs.head }}" | \
-            grep "${{ inputs.head }}"; then
+          git push --force --set-upstream origin "${head}"
+          if ! gh pr list --base "${{ inputs.base }}" --head "${head}" | grep "${head}"; then
             arguments=(
               --base "${{ inputs.base }}"
-              --head "${{ inputs.head }}"
+              --head "${head}"
               --title "${{ inputs.message }}"
               --body "This pull request has been created automatically."
             )
