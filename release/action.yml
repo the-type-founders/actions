@@ -21,13 +21,14 @@ runs:
         patch_version=${{ inputs.version }}
         minor_version=${patch_version%.*}
         major_version=${minor_version%.*}
-        echo organization=${organization} >> $GITHUB_OUTPUT
-        echo repository=${repository} >> $GITHUB_OUTPUT
-        echo major-version=${major_version} >> $GITHUB_OUTPUT
-        echo minor-version=${minor_version} >> $GITHUB_OUTPUT
-        echo patch-version=${patch_version} >> $GITHUB_OUTPUT
+        echo "organization=${organization}" >> "${GITHUB_OUTPUT}"
+        echo "repository=${repository}" >> "${GITHUB_OUTPUT}"
+        echo "major-version=${major_version}" >> "${GITHUB_OUTPUT}"
+        echo "minor-version=${minor_version}" >> "${GITHUB_OUTPUT}"
+        echo "patch-version=${patch_version}" >> "${GITHUB_OUTPUT}"
       shell: bash
-    - uses: actions/github-script@v6
+    - if: steps.context.outputs.major-version != ''
+      uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -47,7 +48,8 @@ runs:
               force: true,
             });
           }
-    - uses: actions/github-script@v6
+    - if: steps.context.outputs.minor-version != ''
+      uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -67,7 +69,8 @@ runs:
               force: true,
             });
           }
-    - uses: actions/github-script@v6
+    - if: steps.context.outputs.patch-version != ''
+      uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
         script: |
