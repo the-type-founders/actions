@@ -46,7 +46,8 @@ runs:
         rm .key
       shell: bash
       working-directory: ${{ inputs.path }}
-    - uses: actions/cache/restore@v3
+    - id: cache
+      uses: actions/cache/restore@v3
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.context.outputs.key }}
@@ -54,7 +55,8 @@ runs:
     - run: git lfs pull
       shell: bash
       working-directory: ${{ inputs.path }}
-    - uses: actions/cache/save@v3
+    - if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.context.outputs.key }}
