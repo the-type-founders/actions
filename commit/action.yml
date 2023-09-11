@@ -17,6 +17,8 @@ inputs:
     default: ""
   description:
     default: This pull request has been created automatically.
+  draft:
+    default: false
   reviewer:
     default: ""
   path:
@@ -61,6 +63,9 @@ runs:
           --title "${title}"
           --body "${{ inputs.description }}"
         )
+        if [[ "${{ inputs.draft }}" == true ]]; then
+          arguments+=(--draft)
+        fi
         if [[ -n "${{ inputs.reviewer }}" ]]; then
           arguments+=(--reviewer "${{ inputs.reviewer }}")
         fi
