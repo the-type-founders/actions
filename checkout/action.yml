@@ -19,6 +19,8 @@ inputs:
     default: "*"
   persist-credentials:
     default: true
+  submodules:
+    default: false
 
 runs:
   using: composite
@@ -32,6 +34,7 @@ runs:
         clean: ${{ inputs.clean }}
         fetch-depth: ${{ inputs.fetch-depth }}
         persist-credentials: ${{ inputs.persist-credentials }}
+        submodules: ${{ inputs.submodules }}
     - id: context
       run: |
         git lfs ls-files \
