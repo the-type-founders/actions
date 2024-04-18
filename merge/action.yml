@@ -11,12 +11,14 @@ runs:
   steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.pull_request.base.ref }}
+        ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ inputs.token }}
         path: ${{ inputs.path }}
         fetch-depth: 0
     - run: |
-        git merge --ff-only "origin/${{ github.event.pull_request.head.ref }}"
+        git rebase "${{ github.event.pull_request.base.ref }}"
+        git checkout "${{ github.event.pull_request.base.ref }}"
+        git merge --ff-only "${{ github.event.pull_request.head.ref }}"
         git push
       shell: bash
       working-directory: ${{ inputs.path }}
