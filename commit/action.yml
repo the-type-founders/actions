@@ -27,7 +27,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - if: inputs.gpg_private_key != '' && inputs.gpg_passphrase != ''
+    - if: inputs.gpg_private_key != ''
       uses: crazy-max/ghaction-import-gpg@v6
       with:
         gpg_private_key: ${{ inputs.gpg_private_key }}
