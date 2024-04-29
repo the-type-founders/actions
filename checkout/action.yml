@@ -50,7 +50,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.path }}
     - id: cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.context.outputs.key }}
@@ -59,7 +59,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.path }}
     - if: steps.cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.context.outputs.key }}
