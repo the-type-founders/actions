@@ -29,7 +29,7 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        gh pr checks "${{ github.event.number }}" \
+        gh pr checks "${{ github.event.pull_request.number }}" \
           --repo "${{ github.repository }}" \
           --required \
           --watch || true
