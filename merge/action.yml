@@ -27,6 +27,11 @@ runs:
         git_user_signingkey: true
         git_commit_gpgsign: true
         workdir: ${{ inputs.path }}
+    - run: |
+        gh pr checks "${{ github.event.pull_request.id }}" \
+          --repo "${{ github.repository }}" \
+          --required \
+          --watch || true
     - if: inputs.gpg_private_key != ''
       run: |
         if git merge-base --is-ancestor \
