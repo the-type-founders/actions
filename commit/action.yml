@@ -35,7 +35,8 @@ runs:
         git_user_signingkey: true
         git_commit_gpgsign: true
         workdir: ${{ inputs.path }}
-    - run: |
+    - shell: bash
+      run: |
         if git diff --cached --exit-code > /dev/null; then
           exit 0
         fi
@@ -74,7 +75,6 @@ runs:
           arguments+=(--reviewer "${{ inputs.reviewer }}")
         fi
         gh pr create "${arguments[@]}"
-      shell: bash
       working-directory: ${{ inputs.path }}
       env:
         GH_TOKEN: ${{ inputs.token }}

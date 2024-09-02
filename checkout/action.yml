@@ -36,6 +36,7 @@ runs:
         persist-credentials: ${{ inputs.persist-credentials }}
         submodules: ${{ inputs.submodules }}
     - id: context
+      shell: bash
       run: |
         git lfs ls-files \
           --exclude "${{ inputs.exclude }}" \
@@ -47,7 +48,6 @@ runs:
         echo ...
         echo "key=${key}" >> "${GITHUB_OUTPUT}"
         rm .key
-      shell: bash
       working-directory: ${{ inputs.path }}
     - id: cache
       uses: actions/cache/restore@v4
@@ -55,8 +55,8 @@ runs:
         path: ${{ inputs.path }}/.git/lfs
         key: v1-${{ steps.context.outputs.key }}
         restore-keys: v1-
-    - run: git lfs pull
-      shell: bash
+    - shell: bash
+      run: git lfs pull
       working-directory: ${{ inputs.path }}
     - if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
