@@ -5,6 +5,8 @@ inputs:
     default: main
   head:
     default: ""
+  path:
+    default: "."
   token:
     default: ${{ github.token }}
   gpg_private_key:
@@ -21,8 +23,8 @@ inputs:
     default: false
   reviewer:
     default: ""
-  path:
-    default: "."
+  force:
+    default: false
 
 runs:
   using: composite
@@ -37,8 +39,10 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        if git diff --cached --exit-code > /dev/null; then
-          exit 0
+        if [[ "${{ inputs.force }}" != true ]]; then
+          if git diff --cached --exit-code > /dev/null; then
+            exit 0
+          fi
         fi
         if [[ -z "${{ inputs.title }}" ]]; then
           title=$(echo "${{ inputs.message }}" | head -1)
@@ -53,7 +57,7 @@ runs:
         git config user.name "The Type Founders"
         git config user.email admin@thetypefounders.com
         git checkout -b "${head}"
-        git commit -m "${{ inputs.message }}"
+        git commit --allow-empty -m "${{ inputs.message }}"
         git push --force --set-upstream origin "${head}"
         if gh pr list --base "${{ inputs.base }}" --head "${head}" | grep "${head}"; then
           exit 0
