@@ -56,7 +56,9 @@ runs:
         fi
         git config user.name "The Type Founders"
         git config user.email admin@thetypefounders.com
-        git checkout -b "${head}"
+        if [[ "$(git rev-parse --abbrev-ref HEAD)" != "${head}" ]]; then
+          git checkout -b "${head}"
+        fi
         git commit --allow-empty -m "${{ inputs.message }}"
         git push --force --set-upstream origin "${head}"
         if gh pr list --base "${{ inputs.base }}" --head "${head}" | grep "${head}"; then
