@@ -34,6 +34,7 @@ runs:
           --required \
           --watch || true
       env:
+        GH_DEBUG: api
         GH_TOKEN: ${{ github.token }}
     - if: inputs.gpg_private_key != ''
       shell: bash
