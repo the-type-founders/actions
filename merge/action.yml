@@ -29,31 +29,28 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        expected=$(
-          gh api "repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection/required_status_checks/contexts" \
-            | jq -r ".[]" \
-            | sort || true
-        )
-        echo "Expected:\n${expected}"
-        if [[ -n "${expected}" ]]; then
-          for attempt in {1..10}; do
-            actual=$(
-              gh pr checks "${{ github.event.pull_request.number }}" \
-                --repo "${{ github.repository }}" \
-                --required \
-                --watch \
-                --json name \
-                --jq ".[].name" \
-                | sort || true
-            )
-            echo "Actual:\n${actual}"
-            if [[ "${expected}" == "${actual}" ]]; then
-              break
-            else
+        gh api "repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection/required_status_checks/contexts" \
+          | jq -r ".[]" \
+          | sort > expected.txt \
+          || rm -f expected.txt
+        for attempt in {1..10}; do
+          gh pr checks "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --required \
+            --watch \
+            --json name \
+            --jq ".[].name" \
+            | sort > actual.txt \
+            || rm -f actual.txt
+          if [[ -f expected.txt && -f actual.txt ]]; then
+            if ! diff -q expected.txt actual.txt > /dev/null; then
+              echo "Failed on attempt ${attempt}. Sleeping..."
               sleep 60
+              continue
             fi
-          done
-        fi
+          fi
+          break
+        done
       env:
         GH_TOKEN: ${{ github.token }}
     - if: inputs.gpg_private_key != ''
