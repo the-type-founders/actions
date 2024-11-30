@@ -29,12 +29,32 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        gh pr checks "${{ github.event.pull_request.number }}" \
-          --repo "${{ github.repository }}" \
-          --required \
-          --watch || true
+        expected=$(
+          gh api "repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection/required_status_checks/contexts" \
+            | jq -r ".[]" \
+            | sort
+        )
+        echo "Expected:\n${expected}"
+        if [[ -n "${expected}" ]]; then
+          for attempt in {1..10}; do
+            actual=$(
+              gh pr checks "${{ github.event.pull_request.number }}" \
+                --repo "${{ github.repository }}" \
+                --required \
+                --watch \
+                --json name \
+                --jq ".[].name" \
+                | sort
+            )
+            echo "Actual:\n${actual}"
+            if [[ "${expected}" == "${actual}" ]]; then
+              break
+            else
+              sleep 60
+            fi
+          done
+        fi
       env:
-        GH_DEBUG: api
         GH_TOKEN: ${{ github.token }}
     - if: inputs.gpg_private_key != ''
       shell: bash
