@@ -33,6 +33,11 @@ runs:
           | jq -r ".[]" \
           | sort > expected.txt \
           || rm -f expected.txt
+        if [[ -f expected.txt ]]; then
+          echo Expected:
+          cat expected.txt
+          echo
+        fi
         for attempt in {1..10}; do
           gh pr checks "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
@@ -42,6 +47,11 @@ runs:
             --jq ".[].name" \
             | sort > actual.txt \
             || rm -f actual.txt
+          if [[ -f actual.txt ]]; then
+            echo Actual:
+            cat actual.txt
+            echo
+          fi
           if [[ -f expected.txt && -f actual.txt ]]; then
             if ! diff -q expected.txt actual.txt > /dev/null; then
               echo "Failed on attempt ${attempt}. Sleeping..."
