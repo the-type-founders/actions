@@ -52,7 +52,7 @@ runs:
           break
         done
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ inputs.token }}
     - if: inputs.gpg_private_key != ''
       shell: bash
       run: |
