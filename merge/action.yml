@@ -38,6 +38,10 @@ runs:
           cat expected.txt
           echo
         fi
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+    - shell: bash
+      run: |
         for attempt in {1..10}; do
           gh pr checks "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
@@ -62,7 +66,7 @@ runs:
           break
         done
       env:
-        GH_TOKEN: ${{ inputs.token }}
+        GH_TOKEN: ${{ github.token }}
     - if: inputs.gpg_private_key != ''
       shell: bash
       run: |
