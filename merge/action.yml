@@ -46,9 +46,8 @@ runs:
           gh pr checks "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
             --required \
-            --watch \
-            --json name \
-            --jq ".[].name" \
+            --json name,state \
+            --jq '.[] | select(.state == "SUCCESS") | .name' \
             | sort > actual.txt \
             || rm -f actual.txt
           if [[ -f actual.txt ]]; then
