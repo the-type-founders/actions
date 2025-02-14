@@ -56,7 +56,10 @@ runs:
         key: v1-${{ steps.context.outputs.key }}
         restore-keys: v1-
     - shell: bash
-      run: git lfs pull
+      run: |
+        git lfs pull \
+          --exclude "${{ inputs.exclude }}" \
+          --include "${{ inputs.include }}"
       working-directory: ${{ inputs.path }}
     - if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
