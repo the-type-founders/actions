@@ -52,7 +52,12 @@ runs:
           title="${{ inputs.title }}"
         fi
         if [[ -z "${{ inputs.head }}" ]]; then
-          head=ttf-$(echo "${title}" | tr "[:upper:]" "[:lower:]" | tr " " -)
+          head=ttf-$(
+            echo -n "${title}" \
+              | tr "[:upper:]" "[:lower:]" \
+              | tr -cs "[:alnum:]" - \
+              | sed "s/^-*//; s/-*$//"
+          )
         else
           head="${{ inputs.head }}"
         fi
