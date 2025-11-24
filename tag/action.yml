@@ -28,7 +28,7 @@ runs:
         echo "minor-version=${minor_version}" >> "${GITHUB_OUTPUT}"
         echo "patch-version=${patch_version}" >> "${GITHUB_OUTPUT}"
     - if: steps.context.outputs.major-version != ''
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -49,7 +49,7 @@ runs:
             });
           }
     - if: steps.context.outputs.minor-version != ''
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -70,7 +70,7 @@ runs:
             });
           }
     - if: steps.context.outputs.patch-version != ''
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         github-token: ${{ inputs.token }}
         script: |
