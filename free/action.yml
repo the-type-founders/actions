@@ -3,9 +3,10 @@ name: Free
 runs:
   using: composite
   steps:
-    - uses: easimon/maximize-build-space@master
-      with:
-        remove-android: true
-        remove-codeql: true
-        remove-dotnet: true
-        remove-haskell: true
+    - run:
+        df -h
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /usr/share/dotnet
+        df -h
