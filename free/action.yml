@@ -3,7 +3,8 @@ name: Free
 runs:
   using: composite
   steps:
-    - run:
+    - shell: bash
+      run:
         df -h
         sudo rm -rf /opt/ghc
         sudo rm -rf /opt/hostedtoolcache/CodeQL
