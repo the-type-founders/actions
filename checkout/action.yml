@@ -4,7 +4,7 @@ inputs:
   repository:
     default: ${{ github.repository }}
   reference:
-    default: ${{ github.sha }}
+    default: ""
   token:
     default: ${{ github.token }}
   path:
