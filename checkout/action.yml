@@ -42,10 +42,14 @@ runs:
           --exclude "${{ inputs.exclude }}" \
           --include "${{ inputs.include }}" \
           --long | sort > .key
-        key=$(cat .key | sha256sum | cut -d " " -f 1)
+        # Caches created with different filters should not serve as fallbacks
+        # for one another, so the filters are made part of the key prefix.
+        prefix=v2-$(printf "%s|%s" "${{ inputs.include }}" "${{ inputs.exclude }}" | sha256sum | cut -d " " -f 1)-
+        key=${prefix}$(cat .key | sha256sum | cut -d " " -f 1)
         echo "The key is ${key} based on $(cat .key | wc -l | xargs) files:"
         head .key
         echo ...
+        echo "prefix=${prefix}" >> "${GITHUB_OUTPUT}"
         echo "key=${key}" >> "${GITHUB_OUTPUT}"
         rm .key
       working-directory: ${{ inputs.path }}
@@ -53,8 +57,8 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ${{ inputs.path }}/.git/lfs
-        key: v1-${{ steps.context.outputs.key }}
-        restore-keys: v1-
+        key: ${{ steps.context.outputs.key }}
+        restore-keys: ${{ steps.context.outputs.prefix }}
     - shell: bash
       run: |
         git lfs pull \
@@ -65,4 +69,4 @@ runs:
       uses: actions/cache/save@v4
       with:
         path: ${{ inputs.path }}/.git/lfs
-        key: v1-${{ steps.context.outputs.key }}
+        key: ${{ steps.context.outputs.key }}
