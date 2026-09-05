@@ -25,7 +25,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.reference }}
@@ -54,7 +54,7 @@ runs:
         rm .key
       working-directory: ${{ inputs.path }}
     - id: cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: ${{ steps.context.outputs.key }}
@@ -66,7 +66,7 @@ runs:
           --include "${{ inputs.include }}"
       working-directory: ${{ inputs.path }}
     - if: steps.cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: ${{ inputs.path }}/.git/lfs
         key: ${{ steps.context.outputs.key }}
