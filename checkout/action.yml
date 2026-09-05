@@ -17,6 +17,8 @@ inputs:
     default: ""
   include:
     default: "*"
+  exact:
+    default: false
   persist-credentials:
     default: true
   submodules:
@@ -38,9 +40,17 @@ runs:
     - id: context
       shell: bash
       run: |
+        include="${{ inputs.include }}"
+        exclude="${{ inputs.exclude }}"
+        if [[ "${{ inputs.exact }}" == true ]]; then
+          # Escape the characters that Git LFS would otherwise read as glob
+          # syntax, such as the brackets in Black[Foundry].
+          include=$(printf "%s" "${include}" | sed 's/[][\\*?#]/\\&/g')
+          exclude=$(printf "%s" "${exclude}" | sed 's/[][\\*?#]/\\&/g')
+        fi
         git lfs ls-files \
-          --exclude "${{ inputs.exclude }}" \
-          --include "${{ inputs.include }}" \
+          --exclude "${exclude}" \
+          --include "${include}" \
           --long | sort > .key
         # Caches created with different filters should not serve as fallbacks
         # for one another, so the filters are made part of the key prefix.
@@ -49,6 +59,8 @@ runs:
         echo "The key is ${key} based on $(cat .key | wc -l | xargs) files:"
         head .key
         echo ...
+        echo "include=${include}" >> "${GITHUB_OUTPUT}"
+        echo "exclude=${exclude}" >> "${GITHUB_OUTPUT}"
         echo "prefix=${prefix}" >> "${GITHUB_OUTPUT}"
         echo "key=${key}" >> "${GITHUB_OUTPUT}"
         rm .key
@@ -62,8 +74,8 @@ runs:
     - shell: bash
       run: |
         git lfs pull \
-          --exclude "${{ inputs.exclude }}" \
-          --include "${{ inputs.include }}"
+          --exclude "${{ steps.context.outputs.exclude }}" \
+          --include "${{ steps.context.outputs.include }}"
       working-directory: ${{ inputs.path }}
     - if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
