@@ -8,6 +8,12 @@ inputs:
   path:
     default: "."
   token:
+    description: >
+      The token used for the GitHub API, that is, for creating the pull request.
+      The push itself uses the credentials persisted by the checkout action. If
+      the push should have the same identity, which is needed for workflows on
+      the pull request to run without manual approval when the branch is
+      force-pushed on a re-run, pass the token to actions/checkout as well.
     default: ${{ github.token }}
   gpg_private_key:
     default: ""
