@@ -77,19 +77,28 @@ runs:
           exit 0
         fi
         git push --force --set-upstream origin "${head}"
-        if gh pr list --base "${{ inputs.base }}" --head "${head}" | grep "${head}"; then
+        if [[ -f "${{ inputs.description }}" ]]; then
+          description=(--body-file "${{ inputs.description }}")
+        else
+          description=(--body "${{ inputs.description }}")
+        fi
+        number=$(
+          gh pr list \
+            --base "${{ inputs.base }}" \
+            --head "${head}" \
+            --json number \
+            --jq ".[].number"
+        )
+        if [[ -n "${number}" ]]; then
+          gh pr edit "${number}" "${description[@]}"
           exit 0
         fi
         arguments=(
           --base "${{ inputs.base }}"
           --head "${head}"
           --title "${title}"
+          "${description[@]}"
         )
-        if [[ -f "${{ inputs.description }}" ]]; then
-          arguments+=(--body-file "${{ inputs.description }}")
-        else
-          arguments+=(--body "${{ inputs.description }}")
-        fi
         if [[ "${{ inputs.draft }}" == true ]]; then
           arguments+=(--draft)
         fi
