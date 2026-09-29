@@ -2,8 +2,8 @@ name: Vulnerabilities
 
 inputs:
   type:
-    description: One of configuration, dependencies, and image.
-    default: dependencies
+    description: Either repository or image.
+    default: repository
   target:
     description: The path or the image reference to scan, depending on the type.
     default: "."
@@ -16,11 +16,13 @@ runs:
         # Development dependencies are what the pipelines install and run.
         TRIVY_INCLUDE_DEV_DEPS: "true"
       with:
-        scan-type: ${{ fromJSON('{"dependencies":"fs","configuration":"config","image":"image"}')[inputs.type] }}
+        scan-type: ${{ inputs.type == 'image' && 'image' || 'fs' }}
         scan-ref: ${{ inputs.target }}
-        # Secrets in Git are the job of the security/leaks action, whereas
-        # images can have them baked in at build time.
-        scanners: ${{ fromJSON('{"dependencies":"vuln","configuration":"","image":"vuln,secret"}')[inputs.type] }}
+        # A repository is checked for vulnerable dependencies and misconfigured
+        # definitions, such as Dockerfiles. Secrets in Git are the job of the
+        # security/leaks action, whereas images can have them baked in at build
+        # time.
+        scanners: ${{ inputs.type == 'image' && 'vuln,secret' || 'vuln,misconfig' }}
         severity: HIGH,CRITICAL
         ignore-unfixed: true
         exit-code: 1
