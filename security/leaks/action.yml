@@ -1,5 +1,12 @@
 name: Leaks
 
+inputs:
+  range:
+    description: >
+      The range of commits to scan, as understood by git log. The default covers
+      the commits of the pull request that triggered the workflow.
+    default: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+
 runs:
   using: composite
   steps:
@@ -22,7 +29,7 @@ runs:
       with:
         args: >-
           git .
-          --log-opts=${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+          --log-opts=${{ inputs.range }}
           --confidence medium
           --redact
           --platform github
