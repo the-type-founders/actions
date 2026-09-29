@@ -43,6 +43,12 @@ runs:
         registry: ghcr.io
         username: ${{ inputs.actor }}
         password: ${{ inputs.token }}
+    # The image is built twice. The first build targets the runner's platform
+    # only and loads the result into the daemon, so that it can be scanned
+    # before anything reaches the registry. The second build is the push: it
+    # replays the cached build for the requested platforms and exports to the
+    # registry, which a plain push from the daemon could not do for several
+    # platforms at once.
     - uses: docker/build-push-action@v7
       with:
         build-args: ${{ inputs.arguments }}
