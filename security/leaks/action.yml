@@ -1,0 +1,28 @@
+name: Leaks
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        # The scan walks the history between the base and the head of the pull
+        # request, which a shallow checkout does not have.
+        if [[ "$(git rev-parse --is-shallow-repository)" == true ]]; then
+          git fetch --unshallow
+        fi
+    - uses: docker://ghcr.io/betterleaks/betterleaks:v1.8.1
+      env:
+        # The container runs as root, whereas the workspace is owned by the
+        # runner user, which Git refuses to touch unless the directory is marked
+        # as safe. The setting has to travel as an environment variable, since
+        # betterleaks v1.8.1 clears the file-based Git configuration.
+        GIT_CONFIG_COUNT: 1
+        GIT_CONFIG_KEY_0: safe.directory
+        GIT_CONFIG_VALUE_0: "*"
+      with:
+        args: >-
+          git .
+          --log-opts=${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+          --confidence medium
+          --redact
+          --platform github

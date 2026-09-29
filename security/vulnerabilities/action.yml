@@ -1,0 +1,26 @@
+name: Vulnerabilities
+
+inputs:
+  type:
+    description: One of configuration, dependencies, and image.
+    default: dependencies
+  target:
+    description: The path or the image reference to scan, depending on the type.
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - uses: aquasecurity/trivy-action@v0.36.0
+      env:
+        # Development dependencies are what the pipelines install and run.
+        TRIVY_INCLUDE_DEV_DEPS: "true"
+      with:
+        scan-type: ${{ fromJSON('{"dependencies":"fs","configuration":"config","image":"image"}')[inputs.type] }}
+        scan-ref: ${{ inputs.target }}
+        # Secrets in Git are the job of the security/leaks action, whereas
+        # images can have them baked in at build time.
+        scanners: ${{ fromJSON('{"dependencies":"vuln","configuration":"","image":"vuln,secret"}')[inputs.type] }}
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        exit-code: 1

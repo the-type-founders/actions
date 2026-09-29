@@ -1,0 +1,25 @@
+name: Security
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  leaks:
+    name: Leaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: $/security/leaks
+
+  vulnerabilities:
+    name: Vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: $/security/vulnerabilities
