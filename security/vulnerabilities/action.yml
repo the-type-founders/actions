@@ -13,15 +13,18 @@ runs:
   steps:
     - uses: aquasecurity/trivy-action@v0.36.0
       env:
-        # Development dependencies are what the pipelines install and run.
+        # To include development dependencies.
         TRIVY_INCLUDE_DEV_DEPS: "true"
+        # To make the output more readable. The version is set in this
+        # repository and hence is checked here as well, by Dependabot.
+        TRIVY_QUIET: "true"
+        TRIVY_SKIP_VERSION_CHECK: "true"
       with:
         scan-type: ${{ inputs.type == 'image' && 'image' || 'fs' }}
         scan-ref: ${{ inputs.target }}
         # A repository is checked for vulnerable dependencies and misconfigured
-        # definitions, such as Dockerfiles. Secrets in Git are the job of the
-        # security/leaks action, whereas images can have them baked in at build
-        # time.
+        # definitions, such as Dockerfiles, whereas an image is checked for
+        # vulnerable dependencies and secrets baked in them as build time.
         scanners: ${{ inputs.type == 'image' && 'vuln,secret' || 'vuln,misconfig' }}
         severity: HIGH,CRITICAL
         ignore-unfixed: true
