@@ -1,7 +1,6 @@
 name: Security Vulnerabilities
 
 on:
-  pull_request:
   workflow_call:
 
 permissions:
@@ -9,7 +8,7 @@ permissions:
 
 jobs:
   main:
-    name: Run the checks
+    name: Vulnerabilities
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
