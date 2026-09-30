@@ -11,6 +11,8 @@ inputs:
     required: false
   platforms:
     default: linux/amd64
+  secrets:
+    required: false
   version:
     required: true
 
@@ -69,6 +71,7 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64
+        secrets: ${{ inputs.secrets }}
         tags: ${{ steps.context.outputs.tags }}
         load: true
     - uses: $/security/vulnerabilities
@@ -81,5 +84,6 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: ${{ inputs.platforms }}
+        secrets: ${{ inputs.secrets }}
         tags: ${{ steps.context.outputs.tags }}
         push: true
