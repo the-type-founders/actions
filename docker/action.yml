@@ -20,21 +20,23 @@ runs:
     - id: context
       shell: bash
       run: |
-        image=ghcr.io/${{ inputs.repository }}
+        base=ghcr.io/${{ inputs.repository }}
+        echo "image=${base}:${{ inputs.version }}" >> "${GITHUB_OUTPUT}"
         if ! [[ "${{ inputs.version }}" =~ ^[0-9]+ ]]; then
-          echo "tags=${image}:${{ inputs.version }}" >> "${GITHUB_OUTPUT}"
+          echo "immutable=false" >> "${GITHUB_OUTPUT}"
+          echo "tags=${base}:${{ inputs.version }}" >> "${GITHUB_OUTPUT}"
           exit 0
         fi
         patch_version=${{ inputs.version }}
         minor_version=${patch_version%.*}
         major_version=${minor_version%.*}
-        echo "image=${image}:${patch_version}" >> "${GITHUB_OUTPUT}"
+        echo "immutable=true" >> "${GITHUB_OUTPUT}"
         cat >> "${GITHUB_OUTPUT}" <<OUTER
         tags<<INNER
-        ${image}:${major_version}
-        ${image}:${minor_version}
-        ${image}:${patch_version}
-        ${image}:latest
+        ${base}:${major_version}
+        ${base}:${minor_version}
+        ${base}:${patch_version}
+        ${base}:latest
         INNER
         OUTER
     - uses: docker/setup-buildx-action@v4
@@ -48,7 +50,7 @@ runs:
     # A semantic version is immutable: once an image has been published under
     # it, it must not be replaced. Other versions, such as branch names, are
     # moving targets and are overwritten freely.
-    - if: steps.context.outputs.image != ''
+    - if: steps.context.outputs.immutable == 'true'
       shell: bash
       run: |
         if docker manifest inspect "${{ steps.context.outputs.image }}" > /dev/null 2>&1; then
@@ -72,7 +74,7 @@ runs:
     - uses: $/security/vulnerabilities
       with:
         type: image
-        target: ghcr.io/${{ inputs.repository }}:${{ inputs.version }}
+        target: ${{ steps.context.outputs.image }}
     - uses: docker/build-push-action@v7
       with:
         build-args: ${{ inputs.arguments }}
