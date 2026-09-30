@@ -30,8 +30,7 @@ runs:
     # A patch version is immutable: once a tag has been created for it, it
     # must not be moved. It is therefore created first, so that the major and
     # minor tags, which are moved freely, stay untouched when it exists.
-    - if: steps.context.outputs.patch-version != ''
-      uses: actions/github-script@v9
+    - uses: actions/github-script@v9
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -46,8 +45,7 @@ runs:
             if (error.status !== 422) throw error;
             core.setFailed('The tag v${{ steps.context.outputs.patch-version }} already exists.');
           }
-    - if: steps.context.outputs.minor-version != ''
-      uses: actions/github-script@v9
+    - uses: actions/github-script@v9
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -67,8 +65,7 @@ runs:
               force: true,
             });
           }
-    - if: steps.context.outputs.major-version != ''
-      uses: actions/github-script@v9
+    - uses: actions/github-script@v9
       with:
         github-token: ${{ inputs.token }}
         script: |
