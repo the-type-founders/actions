@@ -3,10 +3,9 @@ name: Security Vulnerabilities
 on:
   workflow_call:
 
-permissions:
-  contents: read
-
 jobs:
+  # The permissions are left to the caller. Apart from contents: read, it might
+  # grant pull-requests: write for the report to be posted as a comment.
   main:
     name: Vulnerabilities
     runs-on: ubuntu-latest

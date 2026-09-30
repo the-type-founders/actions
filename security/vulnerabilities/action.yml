@@ -11,7 +11,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: aquasecurity/trivy-action@v0.36.0
+    - id: scan
+      uses: aquasecurity/trivy-action@v0.36.0
       env:
         # To include development dependencies.
         TRIVY_INCLUDE_DEV_DEPS: "true"
@@ -29,3 +30,80 @@ runs:
         severity: HIGH,CRITICAL
         ignore-unfixed: true
         exit-code: 1
+        # The report goes to a file instead of the log, so that it can be
+        # posted as a comment as well.
+        output: ${{ runner.temp }}/output.txt
+    - if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        output="${RUNNER_TEMP}/output.txt"
+
+        # The report is absent when the scan itself has failed, in which case
+        # the reason is already in the log.
+        table=""
+        if [[ -f "${output}" ]]; then
+          cat "${output}"
+          table=$(sed '/./,$!d' "${output}")
+          rm "${output}"
+        fi
+
+        # The rest is about posting a comment, which needs a pull request.
+        number="${{ github.event.pull_request.number }}"
+        if [[ -z "${number}" ]]; then
+          exit 0
+        fi
+
+        report="${RUNNER_TEMP}/report.md"
+        comments="repos/${{ github.repository }}/issues/${number}/comments"
+        marker="<!-- vulnerabilities-${{ inputs.type }} -->"
+
+        # A comment is limited to 65536 characters.
+        if (( ${#table} > 60000 )); then
+          table="${table:0:60000}"$'\n[Truncated; see the log for the rest.]'
+        fi
+
+        {
+          echo "${marker}"
+          echo
+          echo '# Security: Vulnerabilities'
+          echo
+          if [[ "${{ steps.scan.outcome }}" == success ]]; then
+            echo '> [!NOTE]'
+            echo '> Nothing has been detected.'
+          elif [[ -n "${table}" ]]; then
+            echo '> [!WARNING]'
+            echo '> '`
+              `'The following has been detected. '`
+              `'Please ensure that it is addressed.'
+          else
+            echo '> [!CAUTION]'
+            echo '> The scan has failed. Please see the log.'
+          fi
+          if [[ -n "${table}" ]]; then
+            echo
+            echo '<details>'
+            echo
+            echo '```'
+            echo "${table}"
+            echo '```'
+            echo
+            echo '</details>'
+          fi
+        } > "${report}"
+
+        # The previous comment is replaced, so that the latest one reflects the
+        # latest commit. Posting requires the caller to grant pull-requests:
+        # write, which is optional: without it, the report is only in the log.
+        post() {
+          gh api "${comments}" --paginate \
+            --jq ".[] | select(.body | startswith(\"${marker}\")) | .id" \
+            | xargs -I {} gh api --silent --method DELETE \
+              "repos/${{ github.repository }}/issues/comments/{}" \
+            && gh api --silent --method POST "${comments}" \
+              --field "body=@${report}"
+        }
+        if ! post; then
+          echo "The report has not been posted as a comment."
+        fi

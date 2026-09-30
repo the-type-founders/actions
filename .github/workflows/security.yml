@@ -1,15 +1,13 @@
 name: Security
 
 on:
-  pull_request:
   workflow_call:
-
-permissions:
-  contents: read
 
 jobs:
   leaks:
     name: Leaks
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -17,6 +15,8 @@ jobs:
           fetch-depth: 0
       - uses: $/security/leaks
 
+  # The permissions are left to the caller. Apart from contents: read, it might
+  # grant pull-requests: write for the report to be posted as a comment.
   vulnerabilities:
     name: Vulnerabilities
     runs-on: ubuntu-latest
