@@ -77,11 +77,6 @@ runs:
             echo '> '`
               `'The following has been detected. '`
               `'Please ensure that it is addressed.'
-          else
-            echo '> [!CAUTION]'
-            echo '> The scan has failed. Please see the log.'
-          fi
-          if [[ -n "${table}" ]]; then
             echo
             echo '<details>'
             echo
@@ -90,6 +85,9 @@ runs:
             echo '```'
             echo
             echo '</details>'
+          else
+            echo '> [!CAUTION]'
+            echo '> The scan has failed. Please see the log.'
           fi
         } > "${report}"
 
