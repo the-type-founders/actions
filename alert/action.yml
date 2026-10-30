@@ -1,0 +1,52 @@
+name: Alert
+
+inputs:
+  webhook:
+    required: true
+  color:
+    default: danger
+  header:
+    default: Failed job on GitHub Actions
+  footer:
+    default: ""
+  token:
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    # The job is the one of the run in progress on this runner. Whatever
+    # stops the lookup, a token without the permission among other things,
+    # leaves the job unlinked rather than the alert unsent.
+    - id: context
+      shell: bash
+      run: |
+        echo "repository=${GITHUB_REPOSITORY#*/}" >> "${GITHUB_OUTPUT}"
+        job=$(
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | select(.runner_name == env.RUNNER_NAME and .status == "in_progress") | .html_url' \
+            2> /dev/null | head -n 1 || true
+        )
+        echo "job=${job}" >> "${GITHUB_OUTPUT}"
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+    - uses: slackapi/slack-github-action@v4
+      with:
+        webhook: ${{ inputs.webhook }}
+        webhook-type: incoming-webhook
+        payload: |
+          text: "${{ inputs.header }}"
+          attachments:
+            - color: ${{ inputs.color }}
+              fallback: "${{ inputs.header }}: ${{ github.repository }}, ${{ github.workflow }}, ${{ github.job }}"
+              fields:
+                - title: repository
+                  value: "<${{ github.server_url }}/${{ github.repository }}|${{ steps.context.outputs.repository }}>"
+                  short: false
+                - title: workflow
+                  value: "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.workflow }}>"
+                  short: true
+                - title: job
+                  value: "${{ steps.context.outputs.job && format('<{0}|{1}>', steps.context.outputs.job, github.job) || github.job }}"
+                  short: true
+              footer: "${{ inputs.footer }}"
