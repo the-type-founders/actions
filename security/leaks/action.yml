@@ -17,6 +17,18 @@ runs:
         if [[ "$(git rev-parse --is-shallow-repository)" == true ]]; then
           git fetch --unshallow
         fi
+    # Plan and state files are binary or archives under arbitrary names, which
+    # betterleaks skips, so they are recognized by content instead. Revisit once
+    # betterleaks recognizes archives by content as well; even then, it only
+    # reports values matching its rules, whereas this step rejects the files:
+    # https://github.com/betterleaks/betterleaks/issues/392
+    #
+    # Outside a pull request, the default range is empty ("..").
+    - if: inputs.range != '..'
+      shell: bash
+      env:
+        RANGE: ${{ inputs.range }}
+      run: python3 "${GITHUB_ACTION_PATH}/artifacts.py" "${RANGE}"
     - uses: docker://ghcr.io/betterleaks/betterleaks:v1.8.1
       env:
         # The container runs as root, whereas the workspace is owned by the
