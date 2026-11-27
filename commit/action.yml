@@ -47,17 +47,17 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        if [[ "${{ inputs.force }}" != true ]]; then
+        if [[ "${FORCE}" != true ]]; then
           if git diff --cached --exit-code > /dev/null; then
             exit 0
           fi
         fi
-        if [[ -z "${{ inputs.title }}" ]]; then
-          title=$(echo "${{ inputs.message }}" | head -1)
+        if [[ -z "${TITLE}" ]]; then
+          title=$(echo "${MESSAGE}" | head -1)
         else
-          title="${{ inputs.title }}"
+          title="${TITLE}"
         fi
-        if [[ -z "${{ inputs.head }}" ]]; then
+        if [[ -z "${HEAD_BRANCH}" ]]; then
           head=ttf-$(
             echo -n "${title}" \
               | tr "[:upper:]" "[:lower:]" \
@@ -65,26 +65,26 @@ runs:
               | sed "s/^-*//; s/-*$//"
           )
         else
-          head="${{ inputs.head }}"
+          head="${HEAD_BRANCH}"
         fi
         git config user.name "The Type Founders"
         git config user.email admin@thetypefounders.com
         if [[ "$(git rev-parse --abbrev-ref HEAD)" != "${head}" ]]; then
           git checkout -b "${head}"
         fi
-        git commit --allow-empty -m "${{ inputs.message }}"
-        if [[ "${{ inputs.push }}" != true ]]; then
+        git commit --allow-empty -m "${MESSAGE}"
+        if [[ "${PUSH}" != true ]]; then
           exit 0
         fi
         git push --force --set-upstream origin "${head}"
-        if [[ -f "${{ inputs.description }}" ]]; then
-          description=(--body-file "${{ inputs.description }}")
+        if [[ -f "${DESCRIPTION}" ]]; then
+          description=(--body-file "${DESCRIPTION}")
         else
-          description=(--body "${{ inputs.description }}")
+          description=(--body "${DESCRIPTION}")
         fi
         number=$(
           gh pr list \
-            --base "${{ inputs.base }}" \
+            --base "${BASE_BRANCH}" \
             --head "${head}" \
             --json number \
             --jq ".[].number"
@@ -94,18 +94,27 @@ runs:
           exit 0
         fi
         arguments=(
-          --base "${{ inputs.base }}"
+          --base "${BASE_BRANCH}"
           --head "${head}"
           --title "${title}"
           "${description[@]}"
         )
-        if [[ "${{ inputs.draft }}" == true ]]; then
+        if [[ "${DRAFT}" == true ]]; then
           arguments+=(--draft)
         fi
-        if [[ -n "${{ inputs.reviewer }}" ]]; then
-          arguments+=(--reviewer "${{ inputs.reviewer }}")
+        if [[ -n "${REVIEWER}" ]]; then
+          arguments+=(--reviewer "${REVIEWER}")
         fi
         gh pr create "${arguments[@]}"
       working-directory: ${{ inputs.path }}
       env:
+        BASE_BRANCH: ${{ inputs.base }}
+        DESCRIPTION: ${{ inputs.description }}
+        DRAFT: ${{ inputs.draft }}
+        FORCE: ${{ inputs.force }}
         GH_TOKEN: ${{ inputs.token }}
+        HEAD_BRANCH: ${{ inputs.head }}
+        MESSAGE: ${{ inputs.message }}
+        PUSH: ${{ inputs.push }}
+        REVIEWER: ${{ inputs.reviewer }}
+        TITLE: ${{ inputs.title }}
