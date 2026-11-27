@@ -71,11 +71,6 @@ def main() -> int:
     if len(sys.argv) != 2:
         print(__doc__.strip().splitlines()[-1], file=sys.stderr)
         return 2
-    if not sys.argv[1].strip("."):
-        # Outside a pull request the default range is "..": nothing to check,
-        # as with the leak scan that follows.
-        print("No commit range to check.")
-        return 0
     commits = git("rev-list", sys.argv[1]).decode().split()
     failed = False
     for commit in commits:
