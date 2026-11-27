@@ -29,7 +29,7 @@ runs:
         workdir: ${{ inputs.path }}
     - shell: bash
       run: |
-        gh api "repos/${GITHUB_REPOSITORY}/branches/${BASE_REF}/protection/required_status_checks/contexts" \
+        gh api "repos/${GITHUB_REPOSITORY}/branches/${BASE}/protection/required_status_checks/contexts" \
           | jq -r ".[]" \
           | sort > expected.txt \
           || rm -f expected.txt
@@ -39,7 +39,7 @@ runs:
           echo
         fi
       env:
-        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        BASE: ${{ github.event.pull_request.base.ref }}
         GH_TOKEN: ${{ inputs.token }}
     - shell: bash
       run: |
@@ -72,26 +72,26 @@ runs:
       shell: bash
       run: |
         if git merge-base --is-ancestor \
-          "${BASE_REF}" \
-          "origin/${HEAD_REF}"; then
-          git merge --ff-only "origin/${HEAD_REF}"
+          "${BASE}" \
+          "origin/${HEAD}"; then
+          git merge --ff-only "origin/${HEAD}"
           git push
         else
           git config user.name "The Type Founders"
           git config user.email admin@thetypefounders.com
-          git checkout "${HEAD_REF}"
-          git rebase "${BASE_REF}"
+          git checkout "${HEAD}"
+          git rebase "${BASE}"
           git push --force
         fi
       working-directory: ${{ inputs.path }}
       env:
-        BASE_REF: ${{ github.event.pull_request.base.ref }}
-        HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        BASE: ${{ github.event.pull_request.base.ref }}
+        HEAD: ${{ github.event.pull_request.head.ref }}
     - if: inputs.gpg_private_key == ''
       shell: bash
       run: |
-        git merge --ff-only "origin/${HEAD_REF}"
+        git merge --ff-only "origin/${HEAD}"
         git push
       working-directory: ${{ inputs.path }}
       env:
-        HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        HEAD: ${{ github.event.pull_request.head.ref }}

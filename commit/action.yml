@@ -57,7 +57,7 @@ runs:
         else
           title="${TITLE}"
         fi
-        if [[ -z "${HEAD_BRANCH}" ]]; then
+        if [[ -z "${HEAD}" ]]; then
           head=ttf-$(
             echo -n "${title}" \
               | tr "[:upper:]" "[:lower:]" \
@@ -65,7 +65,7 @@ runs:
               | sed "s/^-*//; s/-*$//"
           )
         else
-          head="${HEAD_BRANCH}"
+          head="${HEAD}"
         fi
         git config user.name "The Type Founders"
         git config user.email admin@thetypefounders.com
@@ -84,7 +84,7 @@ runs:
         fi
         number=$(
           gh pr list \
-            --base "${BASE_BRANCH}" \
+            --base "${BASE}" \
             --head "${head}" \
             --json number \
             --jq ".[].number"
@@ -94,7 +94,7 @@ runs:
           exit 0
         fi
         arguments=(
-          --base "${BASE_BRANCH}"
+          --base "${BASE}"
           --head "${head}"
           --title "${title}"
           "${description[@]}"
@@ -108,13 +108,13 @@ runs:
         gh pr create "${arguments[@]}"
       working-directory: ${{ inputs.path }}
       env:
-        BASE_BRANCH: ${{ inputs.base }}
-        DESCRIPTION: ${{ inputs.description }}
-        DRAFT: ${{ inputs.draft }}
-        FORCE: ${{ inputs.force }}
+        BASE: ${{ inputs.base }}
+        HEAD: ${{ inputs.head }}
         GH_TOKEN: ${{ inputs.token }}
-        HEAD_BRANCH: ${{ inputs.head }}
         MESSAGE: ${{ inputs.message }}
         PUSH: ${{ inputs.push }}
-        REVIEWER: ${{ inputs.reviewer }}
         TITLE: ${{ inputs.title }}
+        DESCRIPTION: ${{ inputs.description }}
+        DRAFT: ${{ inputs.draft }}
+        REVIEWER: ${{ inputs.reviewer }}
+        FORCE: ${{ inputs.force }}
