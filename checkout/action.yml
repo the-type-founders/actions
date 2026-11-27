@@ -40,9 +40,9 @@ runs:
     - id: context
       shell: bash
       run: |
-        include="${{ inputs.include }}"
-        exclude="${{ inputs.exclude }}"
-        if [[ "${{ inputs.exact }}" == true ]]; then
+        include="${INCLUDE}"
+        exclude="${EXCLUDE}"
+        if [[ "${EXACT}" == true ]]; then
           # Escape the characters that Git LFS would otherwise read as glob
           # syntax, such as the brackets in Black[Foundry].
           include=$(printf "%s" "${include}" | sed 's/[][\\*?#]/\\&/g')
@@ -54,7 +54,7 @@ runs:
           --long | sort > .key
         # Caches created with different filters should not serve as fallbacks
         # for one another, so the filters are made part of the key prefix.
-        prefix=v2-$(printf "%s|%s" "${{ inputs.include }}" "${{ inputs.exclude }}" | sha256sum | cut -d " " -f 1)-
+        prefix=v2-$(printf "%s|%s" "${INCLUDE}" "${EXCLUDE}" | sha256sum | cut -d " " -f 1)-
         key=${prefix}$(cat .key | sha256sum | cut -d " " -f 1)
         echo "The key is ${key} based on $(cat .key | wc -l | xargs) files:"
         head .key
@@ -65,6 +65,10 @@ runs:
         echo "key=${key}" >> "${GITHUB_OUTPUT}"
         rm .key
       working-directory: ${{ inputs.path }}
+      env:
+        EXACT: ${{ inputs.exact }}
+        EXCLUDE: ${{ inputs.exclude }}
+        INCLUDE: ${{ inputs.include }}
     - id: cache
       uses: actions/cache/restore@v6
       with:
@@ -74,9 +78,12 @@ runs:
     - shell: bash
       run: |
         git lfs pull \
-          --exclude "${{ steps.context.outputs.exclude }}" \
-          --include "${{ steps.context.outputs.include }}"
+          --exclude "${EXCLUDE}" \
+          --include "${INCLUDE}"
       working-directory: ${{ inputs.path }}
+      env:
+        EXCLUDE: ${{ steps.context.outputs.exclude }}
+        INCLUDE: ${{ steps.context.outputs.include }}
     - if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:

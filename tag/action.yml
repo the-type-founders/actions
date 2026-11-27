@@ -16,10 +16,10 @@ runs:
     - id: context
       shell: bash
       run: |
-        organization_repository=${{ inputs.repository }}
+        organization_repository="${REPOSITORY}"
         organization=${organization_repository%/*}
         repository=${organization_repository#*/}
-        patch_version=${{ inputs.version }}
+        patch_version="${VERSION}"
         minor_version=${patch_version%.*}
         major_version=${minor_version%.*}
         echo "organization=${organization}" >> "${GITHUB_OUTPUT}"
@@ -27,61 +27,82 @@ runs:
         echo "major-version=${major_version}" >> "${GITHUB_OUTPUT}"
         echo "minor-version=${minor_version}" >> "${GITHUB_OUTPUT}"
         echo "patch-version=${patch_version}" >> "${GITHUB_OUTPUT}"
+      env:
+        REPOSITORY: ${{ inputs.repository }}
+        VERSION: ${{ inputs.version }}
     # A patch version is immutable: once a tag has been created for it, it
     # must not be moved. It is therefore created first, so that the major and
     # minor tags, which are moved freely, stay untouched when it exists.
     - uses: actions/github-script@v9
+      env:
+        OWNER: ${{ steps.context.outputs.organization }}
+        REFERENCE: ${{ inputs.reference }}
+        REPOSITORY: ${{ steps.context.outputs.repository }}
+        VERSION: ${{ steps.context.outputs.patch-version }}
       with:
         github-token: ${{ inputs.token }}
         script: |
+          const { OWNER, REFERENCE, REPOSITORY, VERSION } = process.env;
           try {
             await github.rest.git.createRef({
-              owner: '${{ steps.context.outputs.organization }}',
-              repo: '${{ steps.context.outputs.repository }}',
-              ref: 'refs/tags/v${{ steps.context.outputs.patch-version }}',
-              sha: '${{ inputs.reference }}',
+              owner: OWNER,
+              repo: REPOSITORY,
+              ref: `refs/tags/v${VERSION}`,
+              sha: REFERENCE,
             });
           } catch (error) {
             if (error.status !== 422) throw error;
-            core.setFailed('The tag v${{ steps.context.outputs.patch-version }} already exists.');
+            core.setFailed(`The tag v${VERSION} already exists.`);
           }
     - uses: actions/github-script@v9
+      env:
+        OWNER: ${{ steps.context.outputs.organization }}
+        REFERENCE: ${{ inputs.reference }}
+        REPOSITORY: ${{ steps.context.outputs.repository }}
+        VERSION: ${{ steps.context.outputs.minor-version }}
       with:
         github-token: ${{ inputs.token }}
         script: |
+          const { OWNER, REFERENCE, REPOSITORY, VERSION } = process.env;
           try {
             await github.rest.git.createRef({
-              owner: '${{ steps.context.outputs.organization }}',
-              repo: '${{ steps.context.outputs.repository }}',
-              ref: 'refs/tags/v${{ steps.context.outputs.minor-version }}',
-              sha: '${{ inputs.reference }}',
+              owner: OWNER,
+              repo: REPOSITORY,
+              ref: `refs/tags/v${VERSION}`,
+              sha: REFERENCE,
             });
           } catch {
             await github.rest.git.updateRef({
-              owner: '${{ steps.context.outputs.organization }}',
-              repo: '${{ steps.context.outputs.repository }}',
-              ref: 'tags/v${{ steps.context.outputs.minor-version }}',
-              sha: '${{ inputs.reference }}',
+              owner: OWNER,
+              repo: REPOSITORY,
+              ref: `tags/v${VERSION}`,
+              sha: REFERENCE,
               force: true,
             });
           }
     - uses: actions/github-script@v9
+      env:
+        OWNER: ${{ steps.context.outputs.organization }}
+        REFERENCE: ${{ inputs.reference }}
+        REPOSITORY: ${{ steps.context.outputs.repository }}
+        VERSION: ${{ steps.context.outputs.major-version }}
       with:
         github-token: ${{ inputs.token }}
         script: |
+          const { OWNER, REFERENCE, REPOSITORY, VERSION } = process.env;
           try {
             await github.rest.git.createRef({
-              owner: '${{ steps.context.outputs.organization }}',
-              repo: '${{ steps.context.outputs.repository }}',
-              ref: 'refs/tags/v${{ steps.context.outputs.major-version }}',
-              sha: '${{ inputs.reference }}',
+              owner: OWNER,
+              repo: REPOSITORY,
+              ref: `refs/tags/v${VERSION}`,
+              sha: REFERENCE,
             });
           } catch {
             await github.rest.git.updateRef({
-              owner: '${{ steps.context.outputs.organization }}',
-              repo: '${{ steps.context.outputs.repository }}',
-              ref: 'tags/v${{ steps.context.outputs.major-version }}',
-              sha: '${{ inputs.reference }}',
+              owner: OWNER,
+              repo: REPOSITORY,
+              ref: `tags/v${VERSION}`,
+              sha: REFERENCE,
               force: true,
             });
           }
